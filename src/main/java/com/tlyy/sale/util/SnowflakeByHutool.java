@@ -1,4 +1,4 @@
-package com.tlyy.sale.utils;
+package com.tlyy.sale.util;
 
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateTime;

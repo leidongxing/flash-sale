@@ -15,4 +15,6 @@ public class CreateOrderVO {
     private Long itemId;
     @NotNull
     private Long amount;
+
+    private String key;
 }

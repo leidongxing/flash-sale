@@ -49,8 +49,13 @@ public class CommonResponse {
         this.data = data;
     }
 
+
     public static CommonResponse success() {
         return new CommonResponse(CommonResponseCode.OK.getMessage(), CommonResponseCode.OK.getCode(), Collections.emptyMap());
+    }
+
+    public static CommonResponse success(Object data) {
+        return new CommonResponse(CommonResponseCode.OK.getMessage(), CommonResponseCode.OK.getCode(), Collections.singleton(data));
     }
 
     public static CommonResponse fail() {

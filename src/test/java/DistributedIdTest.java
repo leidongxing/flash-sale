@@ -1,5 +1,5 @@
-import com.tlyy.sale.utils.SnowflakeByHandle;
-import com.tlyy.sale.utils.SnowflakeByHutool;
+import com.tlyy.sale.util.SnowflakeByHandle;
+import com.tlyy.sale.util.SnowflakeByHutool;
 import org.junit.Test;
 import org.springframework.util.StopWatch;
 

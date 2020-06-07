@@ -22,7 +22,7 @@ import java.util.Objects;
  */
 @Data
 @Configuration
-public class RedisConfig {
+public class RedissonConfig {
     @Bean
     public RedissonClient redissonClient(RedisProperties redisProperties) throws IOException {
         Config config = new Config();

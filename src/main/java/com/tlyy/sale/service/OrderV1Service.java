@@ -7,7 +7,7 @@ import com.tlyy.sale.exception.CommonResponseCode;
 import com.tlyy.sale.mapper.ItemMapper;
 import com.tlyy.sale.mapper.ItemOrderMapper;
 import com.tlyy.sale.mapper.ItemStockMapper;
-import com.tlyy.sale.utils.SnowflakeByHandle;
+import com.tlyy.sale.util.SnowflakeByHandle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +18,18 @@ import java.util.Date;
 /**
  * @author LeiDongxing
  * created on 2020/3/10
+ * 基于数据库行锁保证扣减库存与创建订单一致性
  */
 @Service
 @RequiredArgsConstructor
-public class V1Service {
+public class OrderV1Service {
     private final ItemMapper itemMapper;
     private final ItemStockMapper itemStockMapper;
     private final ItemOrderMapper itemOrderMapper;
     private final static SnowflakeByHandle idWorker = new SnowflakeByHandle(0, 0);
 
     @Transactional(rollbackFor = Exception.class)
-    public ItemOrder createOrder(Long userId, Long itemId, Long amount) throws CommonException {
+    public Long createOrder(Long userId, Long itemId, Long amount) throws CommonException {
         //1.校验下单状态,下单的商品是否存在，用户是否合法，购买数量是否正确
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
@@ -68,7 +69,7 @@ public class V1Service {
             throw new CommonException(CommonResponseCode.ERROR, "商品销量失败");
         }
         //4.返回前端
-        return order;
+        return order.getId();
     }
 
 }

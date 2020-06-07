@@ -1,4 +1,4 @@
-package com.tlyy.sale.utils;
+package com.tlyy.sale.util;
 
 /**
  * Twitter_Snowflake<br>
