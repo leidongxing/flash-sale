@@ -5,15 +5,17 @@ import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.exception.CommonException;
 import com.tlyy.sale.exception.CommonResponseCode;
 import com.tlyy.sale.mapper.ItemMapper;
-import com.tlyy.sale.mapper.ItemOrderMapper;
-import com.tlyy.sale.mapper.ItemStockMapper;
 import com.tlyy.sale.util.SnowflakeByHandle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.tlyy.sale.constant.Constants.SALT;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import static com.tlyy.sale.constant.Constants.HASH_KEY_CREATE_ORDER_V1;
 
 /**
  * @author LeiDongxing
@@ -24,11 +26,8 @@ import static com.tlyy.sale.constant.Constants.SALT;
 @RequiredArgsConstructor
 public class OrderV2Service {
     private final ItemMapper itemMapper;
-    private final ItemStockMapper itemStockMapper;
-    private final ItemOrderMapper itemOrderMapper;
+    private final StringRedisTemplate stringRedisTemplate;
     private final OrderV1Service orderV1Service;
-    private final static SnowflakeByHandle idWorker = new SnowflakeByHandle(0, 0);
-
 
     public String createVerifyKey(Long userId, Long itemId) {
         log.info("验证是否在抢购时间内");
@@ -37,17 +36,24 @@ public class OrderV2Service {
         if (item == null) {
             throw new CommonException(CommonResponseCode.ERROR, "商品信息不存在");
         }
-        String verify = SALT + itemId + userId;
-        String verifyKey = DigestUtil.md5Hex(verify);
-        return verifyKey;
+        String key = userId + HASH_KEY_CREATE_ORDER_V1 + itemId;
+        String value = DigestUtil.md5Hex(key);
+        //缓存一定时间 过期删除
+        stringRedisTemplate.opsForValue().set(key, value, 3600, TimeUnit.SECONDS);
+        return value;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long createOrder(Long userId, Long itemId, Long amount, String key) throws CommonException {
-        //1.校验验证码有效性
-        if (key == null) {
+    public Long createOrder(Long userId, Long itemId, Long amount, String token) throws CommonException {
+        //校验秒杀令牌
+        String key = userId + HASH_KEY_CREATE_ORDER_V1 + itemId;
+        String value = stringRedisTemplate.opsForValue().get(key);
+        if (!(Objects.nonNull(value) && value.equals(token))) {
             throw new CommonException(CommonResponseCode.ERROR, "验证码无效");
         }
-        return orderV1Service.createOrder(userId, itemId, amount);
+        Long orderId = orderV1Service.createOrder(userId, itemId, amount);
+        //删除秒杀令牌
+        stringRedisTemplate.delete(key);
+        return orderId;
     }
 }

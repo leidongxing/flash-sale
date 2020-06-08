@@ -1,5 +1,6 @@
 package com.tlyy.sale.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.google.common.util.concurrent.RateLimiter;
 import com.tlyy.sale.controller.vo.CreateOrderVO;
 import com.tlyy.sale.exception.CommonResponse;
@@ -25,9 +26,12 @@ import static com.tlyy.sale.constant.Constants.RATE_LIMIT_TIMES;
 public class OrderController {
     private final OrderV1Service orderV1Service;
     private final OrderV2Service orderV2Service;
-    private RateLimiter rateLimiter = RateLimiter.create(RATE_LIMIT_COUNT);
+    private final RateLimiter rateLimiter = RateLimiter.create(RATE_LIMIT_COUNT);
 
 
+    /**
+     * 创建订单 V1
+     */
     @PostMapping("/order/v1")
     public CommonResponse createOrderV1(@Validated @RequestBody CreateOrderVO vo) {
         //从token中获取uid
@@ -35,18 +39,23 @@ public class OrderController {
         return CommonResponse.success(id);
     }
 
+    /**
+     * 创建订单 V2
+     */
     @PostMapping("/order/v2")
     public CommonResponse createOrderV2(@Validated @RequestBody CreateOrderVO vo) {
         //增加接口限流
         if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
-            log.warn("create order rate limit userId:{}", 2L);
+            log.warn("rate limit function:{}, params:{}", this.getClass().getName(), JSONUtil.toJsonStr(vo));
             return CommonResponse.fail();
         }
         Long id = orderV1Service.createOrder(2L, vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
-
+    /**
+     * 创建订单 V3
+     */
     @PostMapping("/order/v3")
     public CommonResponse createOrderV3(@Validated @RequestBody CreateOrderVO vo) {
         if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
@@ -54,11 +63,14 @@ public class OrderController {
             return CommonResponse.fail();
         }
         //增加防刷验证
-        Long id = orderV2Service.createOrder(2L, vo.getItemId(), vo.getAmount(), vo.getKey());
+        Long id = orderV2Service.createOrder(2L, vo.getItemId(), vo.getAmount(), vo.getToken());
         return CommonResponse.success(id);
     }
 
-    @GetMapping("/key")
+    /**
+     * 创建秒杀令牌
+     */
+    @GetMapping("/token")
     public CommonResponse createVerifyKey(@RequestParam("itemId") Long itemId) {
         String code = orderV2Service.createVerifyKey(2L, itemId);
         return CommonResponse.success(code);

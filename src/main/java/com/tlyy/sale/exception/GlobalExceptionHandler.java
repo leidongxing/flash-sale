@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = CommonException.class)
     public CommonResponse handleCommonException(CommonException e) {
         log.error("common exception:{}", e.getMessage());
-        return new CommonResponse(e.getCode(), e.getMessage());
+        return new CommonResponse(e.getCode(),e.getMessage());
     }
 
     @ExceptionHandler(value = Exception.class)

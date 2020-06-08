@@ -31,15 +31,15 @@ public class CommonResponse {
      */
     private Long time = System.currentTimeMillis();
 
-    public CommonResponse(String message, String code, Object data) {
-        this.message = message;
+    public CommonResponse(String code, String message, Object data) {
         this.code = code;
+        this.message = message;
         this.data = data;
     }
 
-    public CommonResponse(String message, String code) {
-        this.message = message;
+    public CommonResponse(String code, String message) {
         this.code = code;
+        this.message = message;
         this.data = Collections.emptyMap();
     }
 

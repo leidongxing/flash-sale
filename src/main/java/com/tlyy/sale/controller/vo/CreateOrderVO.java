@@ -16,5 +16,5 @@ public class CreateOrderVO {
     @NotNull
     private Long amount;
 
-    private String key;
+    private String token;
 }
