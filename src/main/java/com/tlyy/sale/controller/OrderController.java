@@ -40,11 +40,10 @@ public class OrderController {
     }
 
     /**
-     * 创建订单 V2
+     * 创建订单 V2 增加接口限流
      */
     @PostMapping("/order/v2")
     public CommonResponse createOrderV2(@Validated @RequestBody CreateOrderVO vo) {
-        //增加接口限流
         if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
             log.warn("rate limit function:{}, params:{}", this.getClass().getName(), JSONUtil.toJsonStr(vo));
             return CommonResponse.fail();
@@ -54,7 +53,7 @@ public class OrderController {
     }
 
     /**
-     * 创建订单 V3
+     * 创建订单 V3  增加秒杀令牌 防刷验证
      */
     @PostMapping("/order/v3")
     public CommonResponse createOrderV3(@Validated @RequestBody CreateOrderVO vo) {
@@ -62,7 +61,6 @@ public class OrderController {
             log.warn("create order rate limit userId:{}", 2L);
             return CommonResponse.fail();
         }
-        //增加防刷验证
         Long id = orderV2Service.createOrder(2L, vo.getItemId(), vo.getAmount(), vo.getToken());
         return CommonResponse.success(id);
     }
@@ -76,5 +74,18 @@ public class OrderController {
         return CommonResponse.success(code);
     }
 
+    /**
+     * 创建订单 V4  单用户限制频率 防刷验证
+     */
+    @PostMapping("/order/v4")
+    public CommonResponse createOrderV4(@Validated @RequestBody CreateOrderVO vo) {
+        if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
+            log.warn("create order rate limit userId:{}", 2L);
+            return CommonResponse.fail();
+        }
+
+        Long id = orderV2Service.createOrder(2L, vo.getItemId(), vo.getAmount(), vo.getToken());
+        return CommonResponse.success(id);
+    }
 
 }

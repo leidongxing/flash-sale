@@ -7,5 +7,7 @@ package com.tlyy.sale.constant;
 public final class Constants {
     public static final int RATE_LIMIT_COUNT = 100;
     public static final int RATE_LIMIT_TIMES = 100;
-    public static final String HASH_KEY_CREATE_ORDER_V1 = "_create_order_v1_";
+    public static final String KEY_CREATE_ORDER = "_create_order_";
+    public static final String KEY_LIMIT_USER = "_limit_user_";
+    public static final int TIMES_LIMIT_USER = 50;
 }
