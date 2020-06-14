@@ -6,6 +6,7 @@ import com.tlyy.sale.controller.vo.CreateOrderVO;
 import com.tlyy.sale.exception.CommonResponse;
 import com.tlyy.sale.service.OrderV1Service;
 import com.tlyy.sale.service.OrderV2Service;
+import com.tlyy.sale.service.OrderV3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +27,7 @@ import static com.tlyy.sale.constant.Constants.RATE_LIMIT_TIMES;
 public class OrderController {
     private final OrderV1Service orderV1Service;
     private final OrderV2Service orderV2Service;
+    private final OrderV3Service orderV3Service;
     private final RateLimiter rateLimiter = RateLimiter.create(RATE_LIMIT_COUNT);
 
 
@@ -70,6 +72,10 @@ public class OrderController {
      */
     @GetMapping("/token")
     public CommonResponse createVerifyKey(@RequestParam("itemId") Long itemId) {
+        if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
+            log.warn("create order rate limit userId:{}", 2L);
+            return CommonResponse.fail();
+        }
         String code = orderV2Service.createVerifyKey(2L, itemId);
         return CommonResponse.success(code);
     }
@@ -79,6 +85,20 @@ public class OrderController {
      */
     @PostMapping("/order/v4")
     public CommonResponse createOrderV4(@Validated @RequestBody CreateOrderVO vo) {
+        if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
+            log.warn("create order rate limit userId:{}", 2L);
+            return CommonResponse.fail();
+        }
+
+        Long id = orderV3Service.createOrder(2L, vo.getItemId(), vo.getAmount(), vo.getToken());
+        return CommonResponse.success(id);
+    }
+
+    /**
+     * 创建订单 V5  缓存库存 先更新数据库 再删除缓存
+     **/
+    @PostMapping("/order/v5")
+    public CommonResponse createOrderV5(@Validated @RequestBody CreateOrderVO vo) {
         if (!rateLimiter.tryAcquire(RATE_LIMIT_TIMES, TimeUnit.MICROSECONDS)) {
             log.warn("create order rate limit userId:{}", 2L);
             return CommonResponse.fail();

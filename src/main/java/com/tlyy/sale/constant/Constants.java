@@ -10,4 +10,5 @@ public final class Constants {
     public static final String KEY_CREATE_ORDER = "_create_order_";
     public static final String KEY_LIMIT_USER = "_limit_user_";
     public static final int TIMES_LIMIT_USER = 50;
+    public static final String KEY_ITEM_STOCK = "_item_stock_";
 }
