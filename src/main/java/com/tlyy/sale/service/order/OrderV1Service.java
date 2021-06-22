@@ -1,4 +1,4 @@
-package com.tlyy.sale.service;
+package com.tlyy.sale.service.order;
 
 import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.entity.ItemOrder;

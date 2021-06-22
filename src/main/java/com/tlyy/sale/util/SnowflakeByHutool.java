@@ -8,6 +8,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
@@ -16,6 +17,7 @@ import javax.annotation.PostConstruct;
  * @date 2019/10/8
  */
 @Slf4j
+@Component
 public class SnowflakeByHutool {
 
     private long workerId = 0;
@@ -83,8 +85,6 @@ public class SnowflakeByHutool {
 
     /**
      * 生成类似：5b9e306a4df4f8c54a39fb0c
-     *
-
      * ObjectId 是 MongoDB 数据库的一种唯一 ID 生成策略，
      * 是 UUID version1 的变种，详细介绍可见：服务化框架－分布式 Unique ID 的生成方法一览。
      *

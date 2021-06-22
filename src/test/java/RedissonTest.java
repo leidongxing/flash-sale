@@ -1,9 +1,12 @@
 import org.junit.Test;
 import org.redisson.Redisson;
+import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.RedissonReactiveClient;
 import org.redisson.api.RedissonRxClient;
 import org.redisson.config.Config;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author LeiDongxing
@@ -11,11 +14,24 @@ import org.redisson.config.Config;
  */
 public class RedissonTest {
     @Test
-    public void test(){
+    public void test() {
         Config config = new Config();
         config.useSingleServer().setAddress("redis://127.0.0.1:6379");
         RedissonClient redisson = Redisson.create(config);
         RedissonReactiveClient redissonReactive = Redisson.createReactive(config);
         RedissonRxClient redissonRx = Redisson.createRx(config);
+
+        RBucket<String> bucket = redisson.getBucket("test");
+        bucket.set("456");
+        System.out.println(redisson.getBucket("das").get());
+//        boolean isUpdated = bucket.compareAndSet("123", "4934");
+//        String prevObject = bucket.getAndSet("321");
+//        boolean isSet = bucket.trySet("901");
+//        long objectSize = bucket.size();
+//
+//        // set with expiration
+//        bucket.set("value", 10, TimeUnit.SECONDS);
+//        boolean isNewSet = bucket.trySet("nextValue", 10, TimeUnit.SECONDS);
+        redisson.shutdown();
     }
 }
