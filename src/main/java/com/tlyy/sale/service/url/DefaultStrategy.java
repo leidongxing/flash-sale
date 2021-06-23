@@ -32,7 +32,7 @@ public class DefaultStrategy implements IStrategy {
         RBucket<String> bucket = redissonClient.getBucket(longUrl);
         if (Objects.isNull(bucket.get())) {
             Long id = snowflake.snowflakeId();
-            String shortUrl = tinyUrlConfig.getDomain() + NumericConvertUtils.toRandomNumberSystem62(id);
+            String shortUrl = tinyUrlConfig.getDomain() + "/t/" + NumericConvertUtils.toRandomNumberSystem62(id);
             UrlMapping mapping = new UrlMapping();
             mapping.setId(id);
             mapping.setShortUrl(shortUrl);
@@ -53,7 +53,7 @@ public class DefaultStrategy implements IStrategy {
 
     @Override
     public String urlMapping(String shortUrl) {
-        return null;
+        return urlMappingMapper.selectUrlByShortUrl(tinyUrlConfig.getDomain() + shortUrl);
     }
 
 }

@@ -17,4 +17,8 @@ public class TinyUrlService {
         return defaultStrategy.getTinyUrl(url);
     }
 
+    public String getLongUrl(String tinyUrl) {
+        return defaultStrategy.urlMapping(tinyUrl);
+    }
+
 }

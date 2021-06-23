@@ -17,4 +17,4 @@ spring:
     password: ''
     port: 6379
 tiny.url:
-  domain: tlyy.cn/
+  domain: tlyy.cn
