@@ -1,7 +1,6 @@
-package com.tlyy.sale.controller.url;
+package com.tlyy.sale.controller;
 
-import com.tlyy.sale.controller.vo.CreateOrderVO;
-import com.tlyy.sale.controller.vo.TinyUrlVO;
+import com.tlyy.sale.vo.TinyUrlVO;
 import com.tlyy.sale.exception.CommonResponse;
 import com.tlyy.sale.service.url.TinyUrlService;
 import lombok.RequiredArgsConstructor;

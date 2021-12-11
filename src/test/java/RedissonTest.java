@@ -1,9 +1,6 @@
 import org.junit.Test;
 import org.redisson.Redisson;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.RedissonReactiveClient;
-import org.redisson.api.RedissonRxClient;
+import org.redisson.api.*;
 import org.redisson.config.Config;
 
 import java.util.concurrent.TimeUnit;
@@ -20,6 +17,10 @@ public class RedissonTest {
         RedissonClient redisson = Redisson.create(config);
         RedissonReactiveClient redissonReactive = Redisson.createReactive(config);
         RedissonRxClient redissonRx = Redisson.createRx(config);
+
+        RLockReactive lock = redissonReactive.getLock("dasd");
+        lock.tryLock();
+
 
         RBucket<String> bucket = redisson.getBucket("test");
         bucket.set("456");

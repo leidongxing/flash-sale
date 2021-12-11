@@ -1,4 +1,4 @@
-package com.tlyy.sale.controller.vo;
+package com.tlyy.sale.vo;
 
 import lombok.Data;
 
