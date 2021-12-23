@@ -1,9 +1,11 @@
 package com.tlyy.sale.controller;
 
 import com.tlyy.sale.exception.CommonResponse;
-import com.tlyy.sale.service.order.OrderService;
+import com.tlyy.sale.service.order.OrderV1Service;
+import com.tlyy.sale.service.order.OrderV2Service;
 import com.tlyy.sale.service.order.PreService;
-import com.tlyy.sale.vo.CreateOrderVO;
+import com.tlyy.sale.vo.CreateOrderV1VO;
+import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -18,17 +20,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 public class OrderController {
-    private final OrderService orderService;
     private final PreService preService;
+    private final OrderV1Service orderV1Service;
+    private final OrderV2Service orderV2Service;
 
 
     /**
      * 创建订单 V1
      */
     @PostMapping("/order/v1")
-    public CommonResponse createOrderV1(@Validated @RequestBody CreateOrderVO vo) {
-        //从token中获取uid
-        Long id = orderService.createOrderV1(1L, vo.getItemId(), vo.getAmount());
+    public CommonResponse createOrderV1(@Validated @RequestBody CreateOrderV1VO vo) {
+        Long id = orderV1Service.createOrderV1(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
@@ -36,10 +38,9 @@ public class OrderController {
      * 创建订单 V2 增加接口限流
      */
     @PostMapping("/order/v2")
-    public CommonResponse createOrderV2(@Validated @RequestBody CreateOrderVO vo) {
+    public CommonResponse createOrderV2(@Validated @RequestBody CreateOrderV1VO vo) {
         preService.rateLimit();
-        //从token中获取uid
-        Long id = orderService.createOrderV1(2L, vo.getItemId(), vo.getAmount());
+        Long id = orderV1Service.createOrderV1(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
@@ -48,9 +49,9 @@ public class OrderController {
      * 创建秒杀令牌
      */
     @GetMapping("/token")
-    public CommonResponse createVerifyKey(@RequestParam("itemId") Long itemId) {
+    public CommonResponse createVerifyKey(@RequestParam("uid") Long uid, @RequestParam("itemId") Long itemId) {
         preService.rateLimit();
-        String code = preService.createVerifyKey(3L, itemId);
+        String code = preService.createVerifyKey(uid, itemId);
         return CommonResponse.success(code);
     }
 
@@ -58,10 +59,10 @@ public class OrderController {
      * 创建订单 V3  增加秒杀令牌
      */
     @PostMapping("/order/v3")
-    public CommonResponse createOrderV3(@Validated @RequestBody CreateOrderVO vo) {
+    public CommonResponse createOrderV3(@Validated @RequestBody CreateOrderV1VO vo) {
         preService.rateLimit();
-        preService.validateToke(3L, vo.getItemId(), vo.getToken());
-        Long id = orderService.createOrderV1(3L, vo.getItemId(), vo.getAmount());
+        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+        Long id = orderV1Service.createOrderV1(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
@@ -70,11 +71,11 @@ public class OrderController {
      * 创建订单 V4  增加单用户限制频率 防刷验证
      */
     @PostMapping("/order/v4")
-    public CommonResponse createOrderV4(@Validated @RequestBody CreateOrderVO vo) {
+    public CommonResponse createOrderV4(@Validated @RequestBody CreateOrderV1VO vo) {
         preService.rateLimit();
-        preService.validateToke(4L, vo.getItemId(), vo.getToken());
-        preService.checkUser(4L);
-        Long id = orderService.createOrderV1(4L, vo.getItemId(), vo.getAmount());
+        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+        preService.checkUser(vo.getUid());
+        Long id = orderV1Service.createOrderV1(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
@@ -82,12 +83,24 @@ public class OrderController {
      * 创建订单 V5  缓存库存 先更新数据库 再删除缓存
      **/
     @PostMapping("/order/v5")
-    public CommonResponse createOrderV5(@Validated @RequestBody CreateOrderVO vo) {
+    public CommonResponse createOrderV5(@Validated @RequestBody CreateOrderV1VO vo) {
         preService.rateLimit();
-        preService.validateToke(5L, vo.getItemId(), vo.getToken());
-        preService.checkUser(5L);
-        Long id = orderService.createOrderV2(5L, vo.getItemId(), vo.getAmount(), vo.getToken());
+        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+        preService.checkUser(vo.getUid());
+        Long id = orderV1Service.createOrderV2(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
 
+
+    /**
+     * 创建订单 V6  队列化扣减库存
+     **/
+    @PostMapping("/order/v6")
+    public CommonResponse createOrderV6(@Validated @RequestBody CreateOrderV2VO vo) {
+//        preService.rateLimit();
+//        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+//        preService.checkUser(vo.getUid());
+        Long id = orderV2Service.createOrderV1(vo);
+        return CommonResponse.success(id);
+    }
 }

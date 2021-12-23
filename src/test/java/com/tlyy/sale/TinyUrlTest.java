@@ -1,3 +1,5 @@
+package com.tlyy.sale;
+
 import com.tlyy.sale.util.NumericConvertUtils;
 import org.junit.Test;
 

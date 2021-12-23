@@ -1,3 +1,5 @@
+package com.tlyy.sale;
+
 import com.tlyy.sale.util.SnowflakeByHandle;
 import com.tlyy.sale.util.SnowflakeByHutool;
 import org.junit.Test;

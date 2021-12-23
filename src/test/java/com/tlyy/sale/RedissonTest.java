@@ -1,3 +1,5 @@
+package com.tlyy.sale;
+
 import org.junit.Test;
 import org.redisson.Redisson;
 import org.redisson.api.*;

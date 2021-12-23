@@ -24,7 +24,7 @@ import java.util.Date;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderService {
+public class OrderV1Service {
     private final ItemMapper itemMapper;
     private final ItemStockMapper itemStockMapper;
     private final ItemOrderMapper itemOrderMapper;
@@ -37,17 +37,13 @@ public class OrderService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Long createOrderV1(Long userId, Long itemId, Long amount) throws CommonException {
-        //1.校验下单状态,下单的商品是否存在，用户是否合法，购买数量是否正确
+        //1.校验下单状态,下单的商品是否存在
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new CommonException(CommonResponseCode.ERROR, "商品信息不存在");
         }
 
-        if (amount <= 0 || amount > 1000) {
-            throw new CommonException(CommonResponseCode.ERROR, "数量信息不正确");
-        }
-
-        //2.落单减库存
+        //2.DB扣减库存
         int stockResult = itemStockMapper.decreaseStock(itemId, amount);
         if (stockResult <= 0) {
             throw new CommonException(CommonResponseCode.ERROR, "库存不足");
@@ -79,23 +75,21 @@ public class OrderService {
         return order.getId();
     }
 
-
+    /**
+     * 缓存扣减
+     */
     @Transactional(rollbackFor = Exception.class)
-    public Long createOrderV2(Long userId, Long itemId, Long amount, String token) throws CommonException {
-        //1.校验下单状态,下单的商品是否存在，用户是否合法，购买数量是否正确
+    public Long createOrderV2(Long userId, Long itemId, Long amount) throws CommonException {
+        //1.校验下单状态,下单的商品是否存在
         Item item = itemMapper.selectById(itemId);
         if (item == null) {
             throw new CommonException(CommonResponseCode.ERROR, "商品信息不存在");
         }
 
-        if (amount <= 0 || amount > 1000) {
-            throw new CommonException(CommonResponseCode.ERROR, "数量信息不正确");
-        }
-
-        //2.落单减库存
+        //2.缓存扣减库存
         Long stockResult = getStockCountByCache(itemId);
         if (stockResult == null) {
-            stockResult = getStockCountByCache(itemId);
+            stockResult = getStockCountByDB(itemId);
         }
 
         if (stockResult <= amount) {
@@ -148,7 +142,7 @@ public class OrderService {
         }
     }
 
-    public Long getStockByDB(Long itemId) {
+    public Long getStockCountByDB(Long itemId) {
         return itemStockMapper.selectByItemId(itemId).getStock();
     }
 }
