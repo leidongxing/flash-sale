@@ -1,6 +1,7 @@
 package com.tlyy.sale.service.order;
 
 import cn.hutool.json.JSONUtil;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.entity.ItemOrder;
 import com.tlyy.sale.exception.CommonException;
@@ -36,7 +37,7 @@ public class OrderV2Service {
     private final static long ALL_PROCESS_ALLOW_MILLISECOND = 200L;
 
     private static final ThreadPoolExecutor dbThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MICROSECONDS,
-            new LinkedBlockingQueue<>(1024));
+            new LinkedBlockingQueue<>(1024), new ThreadFactoryBuilder().setNameFormat("db-thread-%d").build());
 
 
     public Long createOrderV1(CreateOrderV2VO vo) throws CommonException {
@@ -59,7 +60,7 @@ public class OrderV2Service {
         //3.请求进入redis扣减队列
         RedisQueue.offer(vo);
 
-        //4.订单处理
+        //4.订单入库
         int waitTimes = 0;
         while (System.currentTimeMillis() - startTime < ALL_PROCESS_ALLOW_MILLISECOND) {
             switch (vo.getRedisProcessStatus()) {
@@ -69,7 +70,7 @@ public class OrderV2Service {
                 case PROCESS_SUCCESS:
                     //4.订单入库
                     ItemOrder order = orderCommonService.createOrder(userId, item, amount);
-                    //5.异步处理上商品的销量 并减去库存  呢次u你
+                    //5.异步处理 增加商品的销量并减去库存
                     dbThreadPool.submit(() -> {
                         int stockResult = itemStockMapper.decreaseStock(itemId, amount);
                         if (stockResult <= 0) {

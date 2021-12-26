@@ -1,6 +1,7 @@
 package com.tlyy.sale.service.cache;
 
 import cn.hutool.json.JSONUtil;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tlyy.sale.entity.ItemStock;
 import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class RedisService {
     private final StringRedisTemplate stringRedisTemplate;
 
     private static final ThreadPoolExecutor redisThreadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MICROSECONDS,
-            new LinkedBlockingQueue<>(2000));
+            new LinkedBlockingQueue<>(2000), new ThreadFactoryBuilder().setNameFormat("redis-thread-%d").build());
 
     private final String SUB_ITEM_STOCK_LUA_SCRIPT = "local key=KEYS[1];local num = tonumber(ARGV[1]);local stock = tonumber(redis.call('get',key));" +
             "if (stock<=0) then return false " +

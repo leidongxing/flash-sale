@@ -84,9 +84,9 @@ public class OrderController {
      **/
     @PostMapping("/order/v5")
     public CommonResponse createOrderV5(@Validated @RequestBody CreateOrderV1VO vo) {
-        preService.rateLimit();
-        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
-        preService.checkUser(vo.getUid());
+//        preService.rateLimit();
+//        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+//        preService.checkUser(vo.getUid());
         Long id = orderV1Service.createOrderV2(vo.getUid(), vo.getItemId(), vo.getAmount());
         return CommonResponse.success(id);
     }
