@@ -5,16 +5,16 @@ import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.entity.ItemOrder;
 import com.tlyy.sale.exception.CommonException;
 import com.tlyy.sale.exception.CommonResponseCode;
-import com.tlyy.sale.mapper.ItemOrderMapper;
+import com.tlyy.sale.mapper.ItemMapper;
+import com.tlyy.sale.mapper.ItemStockMapper;
+import com.tlyy.sale.service.cache.LocalCache;
 import com.tlyy.sale.service.cache.RedisQueue;
-import com.tlyy.sale.util.SnowflakeByHandle;
 import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -30,18 +30,10 @@ import static com.tlyy.sale.vo.CreateOrderV2VO.*;
 @Service
 @RequiredArgsConstructor
 public class OrderV2Service {
-    private final ItemOrderMapper itemOrderMapper;
-    private final static SnowflakeByHandle idWorker = new SnowflakeByHandle(0, 0);
+    private final ItemStockMapper itemStockMapper;
+    private final ItemMapper itemMapper;
+    private final OrderCommonService orderCommonService;
     private final static long ALL_PROCESS_ALLOW_MILLISECOND = 200L;
-
-
-    private static final ThreadPoolExecutor redisThreadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MICROSECONDS,
-            new LinkedBlockingQueue<>(2000));
-
-    private final String SUB_ITEM_STOCK_LUA_SCRIPT = "local key=KEYS[1];local num = tonumber(ARGV[1]);local stock = tonumber(redis.call('get',key));" +
-            "if (stock<=0) then return false " +
-            "elseif (num > stock) then return false " +
-            "else redis.call('decrby', KEYS[1], num) return true end";
 
     private static final ThreadPoolExecutor dbThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MICROSECONDS,
             new LinkedBlockingQueue<>(1024));
@@ -53,24 +45,21 @@ public class OrderV2Service {
         Long userId = vo.getUid();
         long startTime = System.currentTimeMillis();
 
-        //1.校验下单状态,TODO 内存校验下单的商品是否存在
-        Item item = new Item();
-        item.setPrice(new BigDecimal("5600"));
+        //1.校验下单状态,下单的商品是否存在
+        Item item = LocalCache.getItemById(itemId);
+        if (Objects.isNull(item)) {
+            throw new CommonException(CommonResponseCode.ERROR, "商品信息不存在");
+        }
+        //2.初步内存校验库存
+        Long stock = LocalCache.getItemStockById(itemId);
+        if (Objects.isNull(stock) || stock <= 0) {
+            throw new CommonException(CommonResponseCode.ERROR, "库存不足");
+        }
 
-        //2.请求进入redis扣减队列
+        //3.请求进入redis扣减队列
         RedisQueue.offer(vo);
 
-        //3.订单处理
-        ItemOrder order = new ItemOrder();
-        order.setUserId(userId);
-        order.setItemId(itemId);
-        order.setAmount(amount);
-        order.setItemPrice(item.getPrice());
-        order.setOrderPrice(order.getItemPrice().multiply(new BigDecimal(amount)));
-        order.setGmtCreate(new Date());
-        order.setGmtModified(new Date());
-        order.setDeleted(false);
-
+        //4.订单处理
         int waitTimes = 0;
         while (System.currentTimeMillis() - startTime < ALL_PROCESS_ALLOW_MILLISECOND) {
             switch (vo.getRedisProcessStatus()) {
@@ -78,16 +67,21 @@ public class OrderV2Service {
                     log.info("处理失败，等待处理次数waitTime:{},vo:{}", waitTimes, JSONUtil.toJsonStr(vo));
                     throw new CommonException(CommonResponseCode.ERROR, "库存不足");
                 case PROCESS_SUCCESS:
-                    //4.生成交易流水号,订单号
-                    order.setId(idWorker.nextId());
-                    int orderResult = itemOrderMapper.insert(order);
-                    if (orderResult <= 0) {
-                        throw new CommonException(CommonResponseCode.ERROR, "生成订单失败");
-                    }
-
-                    //TODO 异步处理 根据订单 加上商品的销量  减去库存
-
-                    //4.返回前端
+                    //4.订单入库
+                    ItemOrder order = orderCommonService.createOrder(userId, item, amount);
+                    //5.异步处理上商品的销量 并减去库存  呢次u你
+                    dbThreadPool.submit(() -> {
+                        int stockResult = itemStockMapper.decreaseStock(itemId, amount);
+                        if (stockResult <= 0) {
+                            log.error("异步扣减库存失败");
+                        }
+                        int saleResult = itemMapper.increaseSales(itemId, amount);
+                        if (saleResult <= 0) {
+                            log.error("异步增加销量失败");
+                        }
+                        LocalCache.decreaseStock(itemId, amount);
+                    });
+                    //5.返回前端
                     return order.getId();
                 case UN_PROCESS:
                 case PROCESS_PENDING:

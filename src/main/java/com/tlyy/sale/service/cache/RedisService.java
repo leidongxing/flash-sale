@@ -1,7 +1,6 @@
 package com.tlyy.sale.service.cache;
 
 import cn.hutool.json.JSONUtil;
-import com.google.common.cache.CacheBuilder;
 import com.tlyy.sale.entity.ItemStock;
 import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +70,22 @@ public class RedisService {
         for (ItemStock itemStock : itemStockList) {
             stringRedisTemplate.opsForValue().set(generateKey(itemStock.getItemId()), String.valueOf(itemStock.getStock()));
         }
-        log.info("init redis item stock");
+        log.info("初始化redis库存缓存");
+    }
+
+
+    public void delStockCountCache(Long itemId) {
+        stringRedisTemplate.delete(generateKey(itemId));
+        log.info("删除商品id：[{}] 缓存", itemId);
+    }
+
+    public Long getStockCountByCache(Long itemId) {
+        String countStr = stringRedisTemplate.opsForValue().get(generateKey(itemId));
+        if (Objects.nonNull(countStr)) {
+            return Long.parseLong(countStr);
+        }
+        log.info("未找到商品id：[{}] 缓存", itemId);
+        return -1L;
     }
 
     private String generateKey(Long itemId) {

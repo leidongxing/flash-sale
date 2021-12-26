@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 @Slf4j
 public class RedisQueue {
-    private static final LinkedBlockingQueue<CreateOrderV2VO> redisReqQueue = new LinkedBlockingQueue<>(10);
+    private static final LinkedBlockingQueue<CreateOrderV2VO> redisReqQueue = new LinkedBlockingQueue<>(1024);
 
     public static void offer(CreateOrderV2VO vo) {
         boolean result = redisReqQueue.offer(vo);

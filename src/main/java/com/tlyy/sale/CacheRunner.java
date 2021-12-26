@@ -4,13 +4,12 @@ import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.entity.ItemStock;
 import com.tlyy.sale.mapper.ItemMapper;
 import com.tlyy.sale.mapper.ItemStockMapper;
-import com.tlyy.sale.service.cache.ItemCache;
+import com.tlyy.sale.service.cache.LocalCache;
 import com.tlyy.sale.service.cache.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -31,9 +30,9 @@ public class CacheRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         List<Item> itemList = itemMapper.selectAll();
-        ItemCache.initItem(itemList);
+        LocalCache.initItem(itemList);
         List<ItemStock> itemStockList = itemStockMapper.selectAll();
-        ItemCache.initItemStock(itemStockList);
+        LocalCache.initItemStock(itemStockList);
         redisService.initRedisItemStock(itemStockList);
     }
 }

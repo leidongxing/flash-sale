@@ -18,5 +18,8 @@ public interface ItemStockMapper {
     List<ItemStock> selectAll();
 
     @Update("update item_stock set stock= stock-#{amount} where item_id=#{itemId} and stock>=#{amount} ")
+    int decreaseStockWithVersion(@Param("itemId") Long itemId, @Param("amount") Long amount);
+
+    @Update("update item_stock set stock= stock-#{amount} where item_id=#{itemId}")
     int decreaseStock(@Param("itemId") Long itemId, @Param("amount") Long amount);
 }
