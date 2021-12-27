@@ -47,7 +47,7 @@ public class LocalCache {
     }
 
     public static void decreaseStock(Long itemId, Long amount) {
-        log.info("本地缓存扣减库存");
+        log.debug("本地缓存扣减库存");
         itemStockCache.put(itemId, getItemStockById(itemId) - amount);
     }
 

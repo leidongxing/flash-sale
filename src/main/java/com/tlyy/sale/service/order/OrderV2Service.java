@@ -37,7 +37,7 @@ public class OrderV2Service {
     private final static long ALL_PROCESS_ALLOW_MILLISECOND = 200L;
 
     private static final ThreadPoolExecutor dbThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MICROSECONDS,
-            new LinkedBlockingQueue<>(1024), new ThreadFactoryBuilder().setNameFormat("db-thread-%d").build());
+            new LinkedBlockingQueue<>(10240), new ThreadFactoryBuilder().setNameFormat("db-thread-%d").build());
 
 
     public Long createOrderV1(CreateOrderV2VO vo) throws CommonException {
@@ -54,7 +54,7 @@ public class OrderV2Service {
         //2.初步内存校验库存
         Long stock = LocalCache.getItemStockById(itemId);
         if (Objects.isNull(stock) || stock <= 0) {
-            throw new CommonException(CommonResponseCode.ERROR, "库存不足");
+            throw new CommonException(CommonResponseCode.ERROR, "内存库存不足");
         }
 
         //3.请求进入redis扣减队列
@@ -65,9 +65,11 @@ public class OrderV2Service {
         while (System.currentTimeMillis() - startTime < ALL_PROCESS_ALLOW_MILLISECOND) {
             switch (vo.getRedisProcessStatus()) {
                 case PROCESS_FAIL:
-                    log.info("处理失败，等待处理次数waitTime:{},vo:{}", waitTimes, JSONUtil.toJsonStr(vo));
+                    log.error("处理失败，等待处理次数waitTime:{},vo:{}", waitTimes, JSONUtil.toJsonStr(vo));
+                    throw new CommonException(CommonResponseCode.ERROR, "处理失败");
+                case PROCESS_SUCCESS_SOLD_OUT:
                     throw new CommonException(CommonResponseCode.ERROR, "库存不足");
-                case PROCESS_SUCCESS:
+                case PROCESS_SUCCESS_DEAL:
                     //4.订单入库
                     ItemOrder order = orderCommonService.createOrder(userId, item, amount);
                     //5.异步处理 增加商品的销量并减去库存

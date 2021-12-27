@@ -73,7 +73,7 @@ public class OrderV1Service {
             stock = itemStockMapper.selectByItemId(itemId).getStock();
         }
 
-        if (stock <= amount) {
+        if (stock >= amount) {
             //3.DB扣减库存
             int stockResult = itemStockMapper.decreaseStockWithVersion(itemId, amount);
             if (stockResult <= 0) {

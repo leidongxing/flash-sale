@@ -21,10 +21,11 @@ public class CreateOrderV2VO {
 
     private long enterQueueTime;
 
-    public static final int UN_PROCESS = 1;
-    public static final int PROCESS_PENDING = 2;
-    public static final int PROCESS_FAIL = 3;
-    public static final int PROCESS_SUCCESS = 10;
+    public static final int UN_PROCESS = 1; //未处理
+    public static final int PROCESS_PENDING = 2; //处理中
+    public static final int PROCESS_FAIL = 3; //处理失败
+    public static final int PROCESS_SUCCESS_SOLD_OUT = 4;//处理成功 售罄
+    public static final int PROCESS_SUCCESS_DEAL= 10;//处理成功 售罄
 
     private volatile int redisProcessStatus = UN_PROCESS;
 }

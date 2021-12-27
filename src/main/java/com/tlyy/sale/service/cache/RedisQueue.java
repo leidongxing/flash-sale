@@ -14,25 +14,25 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 @Slf4j
 public class RedisQueue {
-    private static final LinkedBlockingQueue<CreateOrderV2VO> redisReqQueue = new LinkedBlockingQueue<>(1024);
+    private static final LinkedBlockingQueue<CreateOrderV2VO> redisReqQueue = new LinkedBlockingQueue<>(10240);
 
     public static void offer(CreateOrderV2VO vo) {
         boolean result = redisReqQueue.offer(vo);
         if (!result) {
-            log.info("入队redis扣减队列失败,vo:{}", JSONUtil.toJsonStr(vo));
+            log.error("入队redis扣减队列失败,vo:{}", JSONUtil.toJsonStr(vo));
             throw new CommonException(CommonResponseCode.ERROR, "入队redis扣减队列请求失败");
         }
         vo.setEnterQueueTime(System.currentTimeMillis());
-        log.info("入队redis扣减队列成功,vo:{}", JSONUtil.toJsonStr(vo));
+        log.debug("入队redis扣减队列成功,vo:{}", JSONUtil.toJsonStr(vo));
     }
 
     public static CreateOrderV2VO take() {
         try {
             CreateOrderV2VO vo = redisReqQueue.take();
-            log.info("出队redis扣减队列成功,vo:{}", JSONUtil.toJsonStr(vo));
+            log.debug("出队redis扣减队列成功,vo:{}", JSONUtil.toJsonStr(vo));
             return vo;
         } catch (InterruptedException e) {
-            log.info("出队redis扣减队列失败,vo:{}", e.getMessage());
+            log.error("出队redis扣减队列失败,vo:{}", e.getMessage());
             throw new CommonException(CommonResponseCode.ERROR, "出队redis扣减队列失败");
         }
     }
