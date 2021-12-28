@@ -24,5 +24,11 @@ spring:
     host: localhost
     password: ''
     port: 6379
+    jedis:
+      pool:
+        max-active: 20
+        max-idle: 20
+        min-idle: 20
+        max-wait: 30
 tiny.url:
   domain: tlyy.cn

@@ -3,11 +3,13 @@ package com.tlyy.sale.service.url;
 import com.tlyy.sale.config.TinyUrlConfig;
 import com.tlyy.sale.entity.UrlMapping;
 import com.tlyy.sale.mapper.UrlMappingMapper;
+import com.tlyy.sale.service.cache.RedisService;
 import com.tlyy.sale.util.NumericConvertUtils;
 import com.tlyy.sale.util.SnowflakeByHutool;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -19,7 +21,8 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 public class DefaultStrategy implements IStrategy {
-    private final RedissonClient redissonClient;
+    //    private final RedissonClient redissonClient;
+    private final StringRedisTemplate stringRedisTemplate;
 
     private final UrlMappingMapper urlMappingMapper;
 
@@ -29,8 +32,9 @@ public class DefaultStrategy implements IStrategy {
 
     @Override
     public String getTinyUrl(String longUrl) {
-        RBucket<String> bucket = redissonClient.getBucket(longUrl);
-        if (Objects.isNull(bucket.get())) {
+//        RBucket<String> bucket = redissonClient.getBucket(longUrl);
+        String value = stringRedisTemplate.opsForValue().get(longUrl);
+        if (Objects.isNull(value)) {
             Long id = snowflake.snowflakeId();
             String shortUrl = tinyUrlConfig.getDomain() + "/t/" + NumericConvertUtils.toRandomNumberSystem62(id);
             UrlMapping mapping = new UrlMapping();
@@ -46,9 +50,11 @@ public class DefaultStrategy implements IStrategy {
             mapping.setCreateTime(System.currentTimeMillis());
             mapping.setUpdateTime(System.currentTimeMillis());
             urlMappingMapper.insert(mapping);
-            bucket.set(mapping.getShortUrl());
+            stringRedisTemplate.opsForValue().set(longUrl, shortUrl);
+//            bucket.set(mapping.getShortUrl());
         }
-        return bucket.get();
+//        return bucket.get();
+        return value;
     }
 
     @Override

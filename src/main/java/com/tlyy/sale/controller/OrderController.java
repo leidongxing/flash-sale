@@ -93,7 +93,7 @@ public class OrderController {
 
 
     /**
-     * 创建订单 V6  队列化扣减库存
+     * 创建订单 V6  队列化扣减库存+wait等待
      **/
     @PostMapping("/order/v6")
     public CommonResponse createOrderV6(@Validated @RequestBody CreateOrderV2VO vo) {
