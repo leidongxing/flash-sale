@@ -11,15 +11,17 @@ import javax.validation.constraints.NotNull;
 @Data
 public class CreateOrderV2VO {
     @NotNull
-    private Long itemId;
+    private transient Long itemId;
     @NotNull
-    private Long amount;
+    private transient Long amount;
     @NotNull
-    private Long uid;
+    private transient Long uid;
 
-    private String token;
+    private transient String token;
 
     private long enterQueueTime;
+    private long leaveQueueTime;
+    private long processTime;
 
     public static final int UN_PROCESS = 1; //未处理
     public static final int PROCESS_PENDING = 2; //处理中
@@ -27,5 +29,5 @@ public class CreateOrderV2VO {
     public static final int PROCESS_SUCCESS_SOLD_OUT = 4;//处理成功 售罄
     public static final int PROCESS_SUCCESS_DEAL= 10;//处理成功 售罄
 
-    private volatile int redisProcessStatus = UN_PROCESS;
+    private transient volatile int redisProcessStatus = UN_PROCESS;
 }

@@ -2,11 +2,13 @@ package com.tlyy.sale.service.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tlyy.sale.entity.Item;
 import com.tlyy.sale.entity.ItemStock;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author LeiDongxing
@@ -16,6 +18,10 @@ import java.util.List;
 public class LocalCache {
     private static Cache<Long, Item> itemCache;
     private static Cache<Long, Long> itemStockCache;
+
+    //定时任务同步
+    private static final ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder().setNameFormat("cache-reload").build());
 
     public static void initItem(List<Item> itemList) {
         itemCache = CacheBuilder.newBuilder()
@@ -46,9 +52,9 @@ public class LocalCache {
         return itemStockCache.getIfPresent(id);
     }
 
-    public static void decreaseStock(Long itemId, Long amount) {
-        log.debug("本地缓存扣减库存");
-        itemStockCache.put(itemId, getItemStockById(itemId) - amount);
+    public static void initUpdateStockTask(List<ItemStock> itemStockList) {
+        log.info("启动更新库存本地缓存任务");
+        scheduledThreadPool.scheduleAtFixedRate(() -> initItemStock(itemStockList), 1, 1, TimeUnit.SECONDS);
     }
 
 }

@@ -6,6 +6,7 @@ import com.tlyy.sale.mapper.ItemMapper;
 import com.tlyy.sale.mapper.ItemStockMapper;
 import com.tlyy.sale.service.cache.LocalCache;
 import com.tlyy.sale.service.cache.RedisService;
+import javafx.fxml.LoadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -33,6 +34,7 @@ public class CacheRunner implements ApplicationRunner {
         LocalCache.initItem(itemList);
         List<ItemStock> itemStockList = itemStockMapper.selectAll();
         LocalCache.initItemStock(itemStockList);
+        LocalCache.initUpdateStockTask(itemStockList);
         redisService.initRedisItemStock(itemStockList);
     }
 }

@@ -14,8 +14,10 @@ import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.concurrent.DelayQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +36,7 @@ public class OrderV2Service {
     private final ItemStockMapper itemStockMapper;
     private final ItemMapper itemMapper;
     private final OrderCommonService orderCommonService;
-    private final static long ALL_PROCESS_ALLOW_MILLISECOND = 200L;
+    private final static long ALL_PROCESS_ALLOW_MILLISECOND = 1000L;
 
     private static final ThreadPoolExecutor dbThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MICROSECONDS,
             new LinkedBlockingQueue<>(10240), new ThreadFactoryBuilder().setNameFormat("db-thread-%d").build());
@@ -61,11 +63,10 @@ public class OrderV2Service {
         RedisQueue.offer(vo);
 
         //4.订单入库
-        int waitTimes = 0;
         while (System.currentTimeMillis() - startTime < ALL_PROCESS_ALLOW_MILLISECOND) {
             switch (vo.getRedisProcessStatus()) {
                 case PROCESS_FAIL:
-                    log.error("处理失败，等待处理次数waitTime:{},vo:{}", waitTimes, JSONUtil.toJsonStr(vo));
+                    log.error("处理失败,vo:{}",JSONUtil.toJsonStr(vo));
                     throw new CommonException(CommonResponseCode.ERROR, "处理失败");
                 case PROCESS_SUCCESS_SOLD_OUT:
                     throw new CommonException(CommonResponseCode.ERROR, "库存不足");
@@ -82,21 +83,20 @@ public class OrderV2Service {
                         if (saleResult <= 0) {
                             log.error("异步增加销量失败");
                         }
-                        LocalCache.decreaseStock(itemId, amount);
                     });
                     //5.返回前端
+                    vo.setProcessTime(System.currentTimeMillis());
                     return order.getId();
                 case UN_PROCESS:
                 case PROCESS_PENDING:
                     try {
-                        waitTimes++;
                         TimeUnit.MICROSECONDS.sleep(20);
                     } catch (InterruptedException e) {
                         throw new CommonException(CommonResponseCode.ERROR, "等待redis扣减异常");
                     }
             }
         }
-        log.info("处理超时，等待处理次数waitTime:{},vo:{}", waitTimes, JSONUtil.toJsonStr(vo));
+        log.error("处理超时,vo:{}",JSONUtil.toJsonStr(vo));
         throw new CommonException(CommonResponseCode.ERROR, "处理超时");
     }
 }

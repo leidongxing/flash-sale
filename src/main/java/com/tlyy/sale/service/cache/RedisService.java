@@ -40,7 +40,7 @@ public class RedisService {
             "elseif (num > stock) then return false " +
             "else redis.call('decrby', KEYS[1], num) return true end";
 
-    private static final long REDIS_PROCESS_ALLOW_MILLISECOND = 200L;
+    private static final long REDIS_PROCESS_ALLOW_MILLISECOND = 1000L;
 
 
     @PostConstruct
@@ -49,6 +49,7 @@ public class RedisService {
         redisMainPool.submit((Runnable) () -> {
             while (true) {
                 CreateOrderV2VO vo = RedisQueue.take();
+                vo.setLeaveQueueTime(System.currentTimeMillis());
                 redisExecutePool.submit(() -> {
                     decreaseStockWithLua(vo);
                 });
@@ -85,7 +86,7 @@ public class RedisService {
             long current = System.currentTimeMillis();
             if (current - vo.getEnterQueueTime() > REDIS_PROCESS_ALLOW_MILLISECOND) {
                 vo.setRedisProcessStatus(PROCESS_FAIL);
-                log.error("出队redis扣减队列已经超时无需操作,current:{},vo:{}", current, JSONUtil.toJsonStr(vo));
+                log.error("出队时已经超时无需操作,current:{},vo:{}", current, JSONUtil.toJsonStr(vo));
             } else {
                 log.debug("redis lua脚本扣减执行");
                 DefaultRedisScript<Boolean> defaultRedisScript = new DefaultRedisScript<>(SUB_ITEM_STOCK_LUA_SCRIPT, Boolean.class);
