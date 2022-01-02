@@ -4,6 +4,7 @@ import com.tlyy.sale.exception.CommonResponse;
 import com.tlyy.sale.service.order.OrderV1Service;
 import com.tlyy.sale.service.order.OrderV2Service;
 import com.tlyy.sale.service.order.PreService;
+import com.tlyy.sale.vo.CreateOrderV3VO;
 import com.tlyy.sale.vo.CreateOrderV1VO;
 import com.tlyy.sale.vo.CreateOrderV2VO;
 import lombok.RequiredArgsConstructor;
@@ -100,7 +101,19 @@ public class OrderController {
 //        preService.rateLimit();
 //        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
 //        preService.checkUser(vo.getUid());
-        Long id = orderV2Service.createOrderV1(vo);
+        Long id = orderV2Service.createOrderV2(vo);
+        return CommonResponse.success(id);
+    }
+
+    /**
+     * 创建订单 V7  队列化扣减库存+condition处理
+     **/
+    @PostMapping("/order/v7")
+    public CommonResponse createOrderV7(@Validated @RequestBody CreateOrderV3VO vo) {
+//        preService.rateLimit();
+//        preService.validateToke(vo.getUid(), vo.getItemId(), vo.getToken());
+//        preService.checkUser(vo.getUid());
+        Long id = orderV2Service.createOrderV3(vo);
         return CommonResponse.success(id);
     }
 }

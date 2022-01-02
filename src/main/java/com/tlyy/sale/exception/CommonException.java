@@ -1,11 +1,13 @@
 package com.tlyy.sale.exception;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author LeiDongxing
  * created on 2020/5/5
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class CommonException extends RuntimeException {
     private String code;

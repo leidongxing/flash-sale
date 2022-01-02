@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tlyy.sale.entity.ItemStock;
 import com.tlyy.sale.vo.CreateOrderV2VO;
+import com.tlyy.sale.vo.CreateOrderV3VO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -48,10 +49,11 @@ public class RedisService {
     public void initRedisThreadPool() {
         redisMainPool.submit((Runnable) () -> {
             while (true) {
-                CreateOrderV2VO vo = RedisQueue.take();
-                vo.setLeaveQueueTime(System.currentTimeMillis());
+//                CreateOrderV2VO vo = RedisQueue.takeV2();
+                CreateOrderV3VO vo = RedisQueue.takeV3();
                 redisExecutePool.submit(() -> {
-                    decreaseStockWithLua(vo);
+//                    decreaseStockWithLuaV2(vo);
+                    decreaseStockWithLuaV3(vo);
                 });
             }
         });
@@ -80,7 +82,7 @@ public class RedisService {
         return -1L;
     }
 
-    private void decreaseStockWithLua(CreateOrderV2VO vo) {
+    private void decreaseStockWithLuaV2(CreateOrderV2VO vo) {
         try {
             vo.setRedisProcessStatus(PROCESS_PENDING);
             long current = System.currentTimeMillis();
@@ -98,6 +100,29 @@ public class RedisService {
             vo.setRedisProcessStatus(PROCESS_FAIL);
         }
     }
+
+    private void decreaseStockWithLuaV3(CreateOrderV3VO vo) {
+        try {
+            vo.setRedisProcessStatus(PROCESS_PENDING);
+            long current = System.currentTimeMillis();
+            if (current - vo.getEnterQueueTime() > REDIS_PROCESS_ALLOW_MILLISECOND) {
+                vo.setRedisProcessStatus(PROCESS_FAIL);
+                log.error("出队时已经超时无需操作,current:{},vo:{}", current, JSONUtil.toJsonStr(vo));
+            } else {
+                log.debug("redis lua脚本扣减执行");
+                DefaultRedisScript<Boolean> defaultRedisScript = new DefaultRedisScript<>(SUB_ITEM_STOCK_LUA_SCRIPT, Boolean.class);
+                Boolean result = stringRedisTemplate.execute(defaultRedisScript, Collections.singletonList(generateKey(vo.getItemId())), String.valueOf(vo.getAmount()));
+                vo.setRedisProcessStatus(Boolean.TRUE.equals(result) ? PROCESS_SUCCESS_DEAL : PROCESS_SUCCESS_SOLD_OUT);
+            }
+            vo.getLock().lock();
+            vo.getCondition().signal();
+            vo.getLock().unlock();
+        } catch (Exception e) {
+            e.printStackTrace();
+            vo.setRedisProcessStatus(PROCESS_FAIL);
+        }
+    }
+
 
     private String generateKey(Long itemId) {
         return "stock:itemid:" + itemId;
