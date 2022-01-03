@@ -1,0 +1,24 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: admin-server
+  security:
+    user:
+      name: admin
+      password: admin
+  management:
+    endpoints:
+      web:
+        exposure:
+          # 暴露xxx端点，如需暴露多个，用,分隔；如需暴露所有端点，用'*'
+          include: "*"
+    endpoint:
+      health:
+        # 是否展示健康检查详情
+        show-details: ALWAYS
+
+  info:
+    version: 1.0
+    groupId: com.tlyy
+    artifactId: flash-sale-admin-server
