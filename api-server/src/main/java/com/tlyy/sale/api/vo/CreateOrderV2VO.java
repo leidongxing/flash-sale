@@ -1,33 +1,19 @@
 package com.tlyy.sale.api.vo;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author LeiDongxing
- * created on 2021/12/18
+ * created on 2022/1/2
  */
-@Data
-public class CreateOrderV2VO {
-    @NotNull
-    private transient Long itemId;
-    @NotNull
-    private transient Long amount;
-    @NotNull
-    private transient Long uid;
-
-    private transient String token;
-
-    private long enterQueueTime;
-    private long leaveQueueTime;
-    private long processTime;
-
-    public static final int UN_PROCESS = 1; //未处理
-    public static final int PROCESS_PENDING = 2; //处理中
-    public static final int PROCESS_FAIL = 3; //处理失败
-    public static final int PROCESS_SUCCESS_SOLD_OUT = 4;//处理成功 售罄
-    public static final int PROCESS_SUCCESS_DEAL= 10;//处理成功 售罄
-
-    private transient volatile int redisProcessStatus = UN_PROCESS;
+@EqualsAndHashCode(callSuper = true)
+@Getter
+public class CreateOrderV2VO extends CreateOrderV1VO {
+    private final transient Lock lock = new ReentrantLock();
+    private final transient Condition condition = lock.newCondition();
 }

@@ -2,24 +2,32 @@ package com.tlyy.sale.api.vo;
 
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 /**
  * @author LeiDongxing
- * created on 2020/5/5
+ * created on 2021/12/18
  */
 @Data
 public class CreateOrderV1VO {
     @NotNull
-    private Long itemId;
+    private transient Long itemId;
     @NotNull
-    @Min(value = 1, message = "数量信息不正确")
-    @Max(value = 1000, message = "数量信息不正确")
-    private Long amount;
+    private transient Long amount;
     @NotNull
-    private Long uid;
+    private transient Long uid;
 
-    private String token;
+    private transient String token;
+
+    private long enterQueueTime;
+    private long leaveQueueTime;
+    private long processTime;
+
+    public static final int UN_PROCESS = 1; //未处理
+    public static final int PROCESS_PENDING = 2; //处理中
+    public static final int PROCESS_FAIL = 3; //处理失败
+    public static final int PROCESS_SUCCESS_SOLD_OUT = 4;//处理成功 售罄
+    public static final int PROCESS_SUCCESS_DEAL= 10;//处理成功 售罄
+
+    private transient volatile int redisProcessStatus = UN_PROCESS;
 }

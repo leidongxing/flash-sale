@@ -1,13 +1,12 @@
 package com.tlyy.sale.api.service.order;
 
-import com.tlyy.sale.api.service.cache.RedisService;
+import com.tlyy.sale.api.service.cache.RedisCommonService;
 import com.tlyy.sale.api.entity.Item;
 import com.tlyy.sale.api.entity.ItemOrder;
 import com.tlyy.sale.api.exception.CommonException;
 import com.tlyy.sale.api.exception.CommonResponseCode;
 import com.tlyy.sale.api.mapper.ItemMapper;
 import com.tlyy.sale.api.mapper.ItemStockMapper;
-import com.tlyy.sale.api.service.cache.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,7 @@ import java.util.Objects;
 public class OrderV1Service {
     private final ItemMapper itemMapper;
     private final ItemStockMapper itemStockMapper;
-    private final RedisService redisService;
+    private final RedisCommonService redisCommonService;
     private final OrderCommonService orderCommonService;
 
     /**
@@ -69,7 +68,7 @@ public class OrderV1Service {
         }
 
         //2.查询库存
-        Long stock = redisService.getStockCountByCache(itemId);
+        Long stock = redisCommonService.getStockCountByCache(itemId);
         if (Objects.isNull(stock)) {
             stock = itemStockMapper.selectByItemId(itemId).getStock();
         }
@@ -82,7 +81,7 @@ public class OrderV1Service {
             }
 
             //4.删除库存缓存
-            redisService.delStockCountCache(itemId);
+            redisCommonService.delStockCountCache(itemId);
 
             //5.订单入库
             ItemOrder order = orderCommonService.createOrder(userId, item, amount);

@@ -6,7 +6,7 @@ import com.tlyy.sale.api.entity.ItemStock;
 import com.tlyy.sale.api.mapper.ItemMapper;
 import com.tlyy.sale.api.mapper.ItemStockMapper;
 import com.tlyy.sale.api.service.cache.LocalCache;
-import com.tlyy.sale.api.service.cache.RedisService;
+import com.tlyy.sale.api.service.cache.RedisCommonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class CacheRunner implements ApplicationRunner {
     private final ItemMapper itemMapper;
     private final ItemStockMapper itemStockMapper;
-    private final RedisService redisService;
+    private final RedisCommonService redisCommonService;
     //定时任务同步
     private static final ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1,
             new ThreadFactoryBuilder().setNameFormat("cache-reload").build());
@@ -40,7 +40,7 @@ public class CacheRunner implements ApplicationRunner {
         LocalCache.initItem(itemList);
         List<ItemStock> itemStockList = itemStockMapper.selectAll();
         LocalCache.initItemStock(itemStockList);
-        redisService.initRedisItemStock(itemStockList);
+        redisCommonService.initRedisItemStock(itemStockList);
     }
 
 
