@@ -1,6 +1,6 @@
 package com.tlyy.sale.api.service.order;
 
-import com.tlyy.sale.api.service.cache.RedisCommonService;
+import com.tlyy.sale.api.service.redis.RedisCommonService;
 import com.tlyy.sale.api.entity.Item;
 import com.tlyy.sale.api.entity.ItemOrder;
 import com.tlyy.sale.api.exception.CommonException;

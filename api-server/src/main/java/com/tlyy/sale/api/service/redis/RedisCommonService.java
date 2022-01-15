@@ -1,4 +1,4 @@
-package com.tlyy.sale.api.service.cache;
+package com.tlyy.sale.api.service.redis;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tlyy.sale.api.entity.ItemStock;
@@ -53,6 +53,6 @@ public class RedisCommonService {
             return Long.parseLong(countStr);
         }
         log.debug("未找到商品id：[{}] 缓存", itemId);
-        return -1L;
+        return null;
     }
 }

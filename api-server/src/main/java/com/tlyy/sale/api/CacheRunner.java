@@ -6,7 +6,7 @@ import com.tlyy.sale.api.entity.ItemStock;
 import com.tlyy.sale.api.mapper.ItemMapper;
 import com.tlyy.sale.api.mapper.ItemStockMapper;
 import com.tlyy.sale.api.service.cache.LocalCache;
-import com.tlyy.sale.api.service.cache.RedisCommonService;
+import com.tlyy.sale.api.service.redis.RedisCommonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

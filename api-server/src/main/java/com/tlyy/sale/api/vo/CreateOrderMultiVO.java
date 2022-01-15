@@ -9,6 +9,6 @@ import lombok.EqualsAndHashCode;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class CreateOrderV3VO extends CreateOrderV2VO {
+public class CreateOrderMultiVO extends CreateOrderV2VO {
     private long createTime;
 }
